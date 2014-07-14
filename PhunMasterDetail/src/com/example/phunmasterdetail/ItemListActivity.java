@@ -16,7 +16,7 @@ public class ItemListActivity extends ActionBarActivity implements
 		ItemListFragment.Callbacks {
 
 	private ShareActionProvider mShareActionProvider;
-	private String itemSlected = null;
+	private String mItemSlected = null;
 	static boolean mTwoPane = false;
 
 	@Override
@@ -34,7 +34,7 @@ public class ItemListActivity extends ActionBarActivity implements
 
 	@Override
 	public void onItemSelected(String id) {
-		itemSlected = id;
+		mItemSlected = id;
 		ItemDetailFragment fragment = new ItemDetailFragment();
 		if (mTwoPane) {
 			Bundle arguments = new Bundle();
@@ -55,7 +55,7 @@ public class ItemListActivity extends ActionBarActivity implements
 	@Override
 	protected void onStart() {
 		super.onStart();
-		itemSlected = null;
+		mItemSlected = null;
 	}
 
 	@SuppressLint("NewApi")
@@ -64,7 +64,7 @@ public class ItemListActivity extends ActionBarActivity implements
 		if (mTwoPane) {
 			getMenuInflater().inflate(R.menu.menu, menu);
 			MenuItem mMenuItem = menu.findItem(R.id.menu_item_share);
-			if (itemSlected != null) {
+			if (mItemSlected != null) {
 				mMenuItem.setEnabled(true);
 				mMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 				mShareActionProvider = new ShareActionProvider(this);
@@ -73,7 +73,7 @@ public class ItemListActivity extends ActionBarActivity implements
 				mShareActionProvider
 						.setShareHistoryFileName("custom_share_history.xml");
 				Venue mVenue = ItemListFragment.venueList.get(Integer
-						.parseInt(itemSlected) - 1);
+						.parseInt(mItemSlected) - 1);
 				Intent mSendIntent = new Intent();
 				mSendIntent.setAction(Intent.ACTION_SEND);
 				mSendIntent.putExtra(

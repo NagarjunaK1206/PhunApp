@@ -27,7 +27,7 @@ import com.squareup.picasso.Picasso;
 public class ItemDetailFragment extends Fragment {
 
 	private Venue mVenue;
-	private ProgressBar progressBar;
+	private ProgressBar mProgressBar;
 	private Context context;
 	private View mRootView;
 
@@ -103,11 +103,11 @@ public class ItemDetailFragment extends Fragment {
 
 	private void loadImages() {
 		if (!mVenue.getImageUrl().isEmpty() && mVenue.getImageUrl() != null) {
-			progressBar = (ProgressBar) mRootView
+			mProgressBar = (ProgressBar) mRootView
 					.findViewById(R.id.progressBar);
-			progressBar.setVisibility(View.VISIBLE);
+			mProgressBar.setVisibility(View.VISIBLE);
 			Picasso.with(context).load(mVenue.getImageUrl()).into((ImageView) mRootView.findViewById(R.id.imageView1),
-							new ImageLoadedCallback(progressBar) {
+							new ImageLoadedCallback(mProgressBar) {
 								@Override
 								public void onSuccess() {
 									if (this.progressBar != null) {
