@@ -66,7 +66,10 @@ public class ItemListActivity extends ActionBarActivity implements
 			MenuItem mMenuItem = menu.findItem(R.id.menu_item_share);
 			if (mItemSlected != null) {
 				mMenuItem.setEnabled(true);
-				mMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+				int currentapiVersion = android.os.Build.VERSION.SDK_INT;
+				if (currentapiVersion >= android.os.Build.VERSION_CODES.HONEYCOMB){
+					mMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+				}
 				mShareActionProvider = new ShareActionProvider(this);
 				MenuItemCompat.setActionProvider(mMenuItem,
 						mShareActionProvider);

@@ -35,13 +35,16 @@ public class ItemDetailActivity extends ActionBarActivity {
 		}
 	}
 
-	@SuppressLint("NewApi")
+	@SuppressLint("NewApi") 
 	public boolean onCreateOptionsMenu(Menu menu) {
 
 		getMenuInflater().inflate(R.menu.menu, menu);
 		MenuItem mMenuItem = menu.findItem(R.id.menu_item_share);
 		mMenuItem.setEnabled(true);
-		mMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		int currentapiVersion = android.os.Build.VERSION.SDK_INT;
+		if (currentapiVersion >= android.os.Build.VERSION_CODES.HONEYCOMB){
+			mMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		}
 		mShareActionProvider = new ShareActionProvider(this);
 		MenuItemCompat.setActionProvider(mMenuItem, mShareActionProvider);
 		mShareActionProvider
