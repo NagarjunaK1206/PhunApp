@@ -80,7 +80,7 @@ public class ItemListFragment extends ListFragment {
 		errorAlert.setNegativeButton("OK",
 				new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int id) {
-						dialog.cancel();
+						getActivity().finish();
 					}
 				});
 
