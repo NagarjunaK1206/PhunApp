@@ -1,21 +1,28 @@
 package com.example.phunmasterdetail;
 
-import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.example.phunmasterdetail.util.PhunMasterConstants;
+import com.example.phunmasterdetail.util.Venue;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.ShareActionProvider;
+import android.view.Menu;
+import android.view.MenuItem;
 
-public class ItemListActivity extends SherlockFragmentActivity implements
+public class ItemListActivity extends ActionBarActivity implements
 		ItemListFragment.Callbacks {
 
+	private ShareActionProvider mShareActionProvider;
+	private String itemSlected = null;
 	static boolean mTwoPane = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_item_list);
-
 		if (findViewById(R.id.item_detail_container) != null) {
 			mTwoPane = true;
 			getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -27,6 +34,7 @@ public class ItemListActivity extends SherlockFragmentActivity implements
 
 	@Override
 	public void onItemSelected(String id) {
+		itemSlected = id;
 		ItemDetailFragment fragment = new ItemDetailFragment();
 		if (mTwoPane) {
 			Bundle arguments = new Bundle();
@@ -43,4 +51,55 @@ public class ItemListActivity extends SherlockFragmentActivity implements
 			startActivity(detailIntent);
 		}
 	}
+
+	@Override
+	protected void onStart() {
+		super.onStart();
+		itemSlected = null;
+	}
+
+	@SuppressLint("NewApi")
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		if (mTwoPane) {
+			getMenuInflater().inflate(R.menu.menu, menu);
+			MenuItem mMenuItem = menu.findItem(R.id.menu_item_share);
+			if (itemSlected != null) {
+				mMenuItem.setEnabled(true);
+				mMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+				mShareActionProvider = new ShareActionProvider(this);
+				MenuItemCompat.setActionProvider(mMenuItem,
+						mShareActionProvider);
+				mShareActionProvider
+						.setShareHistoryFileName("custom_share_history.xml");
+				Venue mVenue = ItemListFragment.venueList.get(Integer
+						.parseInt(itemSlected) - 1);
+				Intent mSendIntent = new Intent();
+				mSendIntent.setAction(Intent.ACTION_SEND);
+				mSendIntent.putExtra(
+						Intent.EXTRA_TEXT,
+						"Venue Name: " + mVenue.getName() + " Venue address:  "
+								+ mVenue.getAddress() + "," + mVenue.getCity()
+								+ "," + mVenue.getState() + " "
+								+ mVenue.getZip());
+				mSendIntent.setType("text/plain");
+				getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+				doShare(mSendIntent);
+			} else {
+				mMenuItem.setEnabled(false);
+				mMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+				mShareActionProvider = new ShareActionProvider(this);
+				MenuItemCompat.setActionProvider(mMenuItem,
+						mShareActionProvider);
+				getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+			}
+		}
+		return true;
+	}
+
+	public void doShare(Intent shareIntent) {
+		if (mShareActionProvider != null)
+			mShareActionProvider.setShareIntent(shareIntent);
+	}
+
 }

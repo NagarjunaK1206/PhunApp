@@ -14,72 +14,39 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.app.Activity;
-import android.content.Intent;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.ListFragment;
 import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
-import android.widget.Toast;
-
-import com.actionbarsherlock.app.SherlockListFragment;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.widget.ShareActionProvider;
 import com.example.phunmasterdetail.util.CustomAdapter;
 import com.example.phunmasterdetail.util.PhunMasterConstants;
 import com.example.phunmasterdetail.util.Venue;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-public class ItemListFragment extends SherlockListFragment {
+public class ItemListFragment extends ListFragment {
 
 	private static final String STATE_ACTIVATED_POSITION = "activated_position";
 
 	private Callbacks mCallbacks = sDummyCallbacks;
-	private ShareActionProvider mShareActionProvider;
 
 	private int mActivatedPosition = ListView.INVALID_POSITION;
-	private int mLastItemSelecterd = -1;
-	public static List<Venue> venueList = null;
+	public static List<Venue> venueList;
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
+		// venueList = null;
 		if (ItemListActivity.mTwoPane == true) {
 			setHasOptionsMenu(true);
 		}
-	}
-
-	@Override
-	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-		inflater.inflate(R.menu.menu, menu);
-		Intent mSendIntent = new Intent();
-		MenuItem menuItem = menu.findItem(R.id.menu_item_share);
-		menuItem.setEnabled(true);
-		Log.i("Phun", "mLastItemSelecterd===" + mLastItemSelecterd);
-		if (mLastItemSelecterd != ListView.INVALID_POSITION) {
-			mShareActionProvider = (ShareActionProvider) menuItem
-					.getActionProvider();
-			mShareActionProvider
-					.setShareHistoryFileName("custom_share_history.xml");
-			Venue mVenue = venueList.get(mLastItemSelecterd - 1);
-			mSendIntent.setAction(Intent.ACTION_SEND);
-			mSendIntent.putExtra(Intent.EXTRA_TEXT,
-					"Venue Name: " + mVenue.getName() + " Venue address:  "
-							+ mVenue.getAddress()+","+mVenue.getCity()+","+mVenue.getState()
-							+" "+mVenue.getZip());
-			mSendIntent.setType("text/plain");
-		}
-		doShare(mSendIntent);
-
-	}
-
-	public void doShare(Intent shareIntent) {
-		if (mLastItemSelecterd != ListView.INVALID_POSITION) {
-			mShareActionProvider.setShareIntent(shareIntent);
-		} 
 	}
 
 	public interface Callbacks {
@@ -92,17 +59,44 @@ public class ItemListFragment extends SherlockListFragment {
 		}
 	};
 
-	public ItemListFragment() {
-	}
-
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		venueList = null;
-		if (venueList == null) {
-
-			AsyncTask<Void, Void, String> nc = new NetworkCall().execute();
+		if (checkForConnectivity()) {
+			AsyncTask<Void, Void, String> backgroundService = new ServiceRequestThread().execute();
+		} else {
+			showAlert();
 		}
+	}
+
+	private void showAlert() {
+		AlertDialog.Builder errorAlert = new AlertDialog.Builder(getActivity());
+		errorAlert.setTitle("No Internet Connection");
+		errorAlert
+				.setMessage("There is no internet connectivity."
+						+ "Please switch on your wifi or data connection and try again");
+		errorAlert.setCancelable(true);
+		errorAlert.setIcon(android.R.drawable.ic_dialog_alert);
+		errorAlert.setNegativeButton("OK",
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int id) {
+						dialog.cancel();
+					}
+				});
+
+		AlertDialog alert11 = errorAlert.create();
+		alert11.show();
+	}
+
+	private boolean checkForConnectivity() {
+		ConnectivityManager cm = (ConnectivityManager) getActivity()
+				.getBaseContext()
+				.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+		NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+
+		return (activeNetwork != null && activeNetwork
+				.isConnectedOrConnecting());
 	}
 
 	@Override
@@ -142,9 +136,7 @@ public class ItemListFragment extends SherlockListFragment {
 	public void onListItemClick(ListView listView, View view, int position,
 			long id) {
 		super.onListItemClick(listView, view, position, id);
-
 		mCallbacks.onItemSelected("" + (position + 1));
-		mLastItemSelecterd = position + 1;
 	}
 
 	@Override
@@ -172,13 +164,13 @@ public class ItemListFragment extends SherlockListFragment {
 		mActivatedPosition = position;
 	}
 
-	public class NetworkCall extends AsyncTask<Void, Void, String> {
+	public class ServiceRequestThread extends AsyncTask<Void, Void, String> {
 		@Override
 		protected void onPostExecute(String result) {
 			// TODO Auto-generated method stub
 
 			CustomAdapter mAdapter = new CustomAdapter(getActivity()
-					.getBaseContext());
+					.getBaseContext(), venueList);
 			setListAdapter(mAdapter);
 			super.onPostExecute(result);
 		}
@@ -188,7 +180,8 @@ public class ItemListFragment extends SherlockListFragment {
 
 			DefaultHttpClient client = new DefaultHttpClient();
 
-			HttpGet getRequest = new HttpGet(PhunMasterConstants.JSON_SERVICE_LINK);
+			HttpGet getRequest = new HttpGet(
+					PhunMasterConstants.JSON_SERVICE_LINK);
 
 			try {
 
@@ -198,7 +191,8 @@ public class ItemListFragment extends SherlockListFragment {
 
 				if (statusCode != HttpStatus.SC_OK) {
 					Log.w(getClass().getSimpleName(), "Error " + statusCode
-							+ " for URL " + PhunMasterConstants.JSON_SERVICE_LINK);
+							+ " for URL "
+							+ PhunMasterConstants.JSON_SERVICE_LINK);
 					return null;
 				}
 				HttpEntity entity = getResponse.getEntity();
@@ -210,15 +204,6 @@ public class ItemListFragment extends SherlockListFragment {
 					Type type = new TypeToken<List<Venue>>() {
 					}.getType();
 					venueList = gson.fromJson(reader, type);
-					if (venueList != null) {
-						Log.i("PhunWare",
-								"venuelist not null" + venueList.size());
-					} else {
-						Log.i("PhunWare", "venuelist is null======");
-					}
-					// for (Venue venue : venueList) {
-					// Log.i("PhunWare","results===="+venue.getName());
-					// }
 				} catch (Exception ex) {
 					Log.e("Phunware", "Failed to parse JSON due to: " + ex);
 				}

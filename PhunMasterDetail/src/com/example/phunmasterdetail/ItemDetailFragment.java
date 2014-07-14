@@ -1,6 +1,5 @@
 package com.example.phunmasterdetail;
 
-import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -8,28 +7,30 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
+import android.content.Context;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.actionbarsherlock.app.SherlockFragment;
 import com.example.phunmasterdetail.util.PhunMasterConstants;
 import com.example.phunmasterdetail.util.ScheduleItem;
 import com.example.phunmasterdetail.util.Venue;
+import com.squareup.picasso.Picasso;
 
-public class ItemDetailFragment extends SherlockFragment {
-
+public class ItemDetailFragment extends Fragment {
 
 	private Venue mVenue;
-	static Bitmap mNoImageBitmap;
+	private ProgressBar progressBar;
+	private Context context;
+	private View mRootView;
+
 	public ItemDetailFragment() {
 	}
 
@@ -39,7 +40,8 @@ public class ItemDetailFragment extends SherlockFragment {
 
 		if (getArguments().containsKey(PhunMasterConstants.ARG_ITEM_ID)) {
 			mVenue = ItemListFragment.venueList.get(Integer
-					.parseInt(getArguments().getString(PhunMasterConstants.ARG_ITEM_ID)) - 1);
+					.parseInt(getArguments().getString(
+							PhunMasterConstants.ARG_ITEM_ID)) - 1);
 
 		}
 	}
@@ -47,42 +49,49 @@ public class ItemDetailFragment extends SherlockFragment {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-		View mRootView = inflater.inflate(R.layout.fragment_item_detail,
-				container, false);
-		SimpleDateFormat mDateFormat1 = new SimpleDateFormat(PhunMasterConstants.DATE_FORMAT_1);
-		SimpleDateFormat mDateFormat2 = new SimpleDateFormat(PhunMasterConstants.DATE_FORMAT_2);
+		mRootView = inflater.inflate(R.layout.fragment_item_detail, container,
+				false);
+		context = mRootView.getContext();
+		SimpleDateFormat mDateFormat1 = new SimpleDateFormat(
+				PhunMasterConstants.DATE_FORMAT_1);
+		SimpleDateFormat mDateFormat2 = new SimpleDateFormat(
+				PhunMasterConstants.DATE_FORMAT_2);
 
 		// Show the dummy content as text in a TextView.
 		if (mVenue != null) {
 			LinearLayout mTextLayout = (LinearLayout) mRootView
 					.findViewById(R.id.text_layout);
-			TextView mAddress1 = new TextView(mRootView.getContext());
-			mAddress1.setPadding(0, 5, 0, 0);
-			mAddress1.setText(mVenue.getAddress());
-			mTextLayout.addView(mAddress1);
-			
-			TextView mAddress2 = new TextView(mRootView.getContext());
+			if (!mVenue.getAddress().isEmpty() && mVenue.getAddress() != null) {
+				TextView mAddress1 = new TextView(context);
+				mAddress1.setPadding(0, 5, 0, 0);
+				mAddress1.setText(mVenue.getAddress());
+				mTextLayout.addView(mAddress1);
+			}
+
+			TextView mAddress2 = new TextView(context);
 			mAddress2.setPadding(0, 0, 0, 5);
-			mAddress2.setText(mVenue.getCity()
-					+ ", " + mVenue.getState()+ " " + mVenue.getZip());
+			if (!mVenue.getCity().isEmpty())
+				mAddress2.setText(mVenue.getCity() + ", " + mVenue.getState()
+						+ " " + mVenue.getZip());
 			mTextLayout.addView(mAddress2);
-			
+
 			((TextView) mRootView.findViewById(R.id.item_detail))
 					.setText(mVenue.getName());
-			new DownloadImageInBackground(
-					(ImageView) mRootView.findViewById(R.id.imageView1))
-					.execute(mVenue.getImageUrl());
-			mNoImageBitmap=BitmapFactory.decodeResource(getResources(), R.drawable.no_image);
-			List<ScheduleItem> mScheduleList = ItemListFragment.venueList
-					.get(Integer
-							.parseInt(getArguments().getString(PhunMasterConstants.ARG_ITEM_ID)) - 1)
+
+			loadImages();
+
+			List<ScheduleItem> mScheduleList = ItemListFragment.venueList.get(
+					Integer.parseInt(getArguments().getString(
+							PhunMasterConstants.ARG_ITEM_ID)) - 1)
 					.getSchedule();
+			Log.i("phun",
+					"========mScheduleList length=====" + mScheduleList.size());
 			for (ScheduleItem mSchedule : mScheduleList) {
 				String mStartDate = printInLocalTime(mSchedule.getStart_date(),
 						mDateFormat1);
 				String mEndDate = printInLocalTime(mSchedule.getEnd_date(),
 						mDateFormat2);
-				TextView mDate = new TextView(mRootView.getContext());
+				TextView mDate = new TextView(context);
 				mDate.setPadding(0, 5, 0, 5);
 				mDate.setText("" + mStartDate + " to " + mEndDate);
 				mTextLayout.addView(mDate);
@@ -90,6 +99,27 @@ public class ItemDetailFragment extends SherlockFragment {
 		}
 
 		return mRootView;
+	}
+
+	private void loadImages() {
+		if (!mVenue.getImageUrl().isEmpty() && mVenue.getImageUrl() != null) {
+			progressBar = (ProgressBar) mRootView
+					.findViewById(R.id.progressBar);
+			progressBar.setVisibility(View.VISIBLE);
+			Picasso.with(context).load(mVenue.getImageUrl()).into((ImageView) mRootView.findViewById(R.id.imageView1),
+							new ImageLoadedCallback(progressBar) {
+								@Override
+								public void onSuccess() {
+									if (this.progressBar != null) {
+										this.progressBar
+												.setVisibility(View.GONE);
+									}
+								}
+							});
+		} else {
+			Picasso.with(context).load(R.drawable.no_image)
+					.into((ImageView) mRootView.findViewById(R.id.imageView1));
+		}
 	}
 
 	private String printInLocalTime(String string, SimpleDateFormat reqFormat) {
@@ -116,34 +146,4 @@ public class ItemDetailFragment extends SherlockFragment {
 		return mNewDateFormat.format(dt);
 	}
 
-}
-
-class DownloadImageInBackground extends AsyncTask<String, Void, Bitmap> {
-	ImageView bmImage;
-
-	public DownloadImageInBackground(ImageView bmImage) {
-		this.bmImage = bmImage;
-	}
-
-	protected Bitmap doInBackground(String... urls) {
-		String mUrl = urls[0];
-		Bitmap mBitmapImage = null;
-		try {
-			InputStream in = new java.net.URL(mUrl).openStream();
-			mBitmapImage = BitmapFactory.decodeStream(in);
-		} catch (Exception e) {
-			Log.e("Error", e.getMessage());
-			e.printStackTrace();
-		}
-		return mBitmapImage;
-	}
-
-	protected void onPostExecute(Bitmap result) {
-		if(result!=null){
-			bmImage.setImageBitmap(result);
-		}
-		else{
-			bmImage.setImageBitmap(ItemDetailFragment.mNoImageBitmap);
-		}
-	}
 }

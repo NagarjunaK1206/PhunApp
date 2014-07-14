@@ -1,6 +1,7 @@
 package com.example.phunmasterdetail.util;
 
-import com.example.phunmasterdetail.ItemListFragment;
+import java.util.List;
+
 import com.example.phunmasterdetail.R;
 
 import android.content.Context;
@@ -13,17 +14,19 @@ import android.widget.TextView;
 
 public class CustomAdapter extends BaseAdapter implements OnClickListener {
 	private Context mContext;
+	private List<Venue> venueList;
 
-	public CustomAdapter(Context mContext) {
+	public CustomAdapter(Context mContext, List<Venue> venueList) {
 		this.mContext = mContext;
+		this.venueList=venueList;
 	}
 
 	public int getCount() {
-		return ItemListFragment.venueList.size();
+		return venueList.size();
 	}
 
 	public Object getItem(int position) {
-		return ItemListFragment.venueList.get(position);
+		return venueList.get(position);
 	}
 
 	public long getItemId(int position) {
@@ -31,7 +34,7 @@ public class CustomAdapter extends BaseAdapter implements OnClickListener {
 	}
 
 	public View getView(int position, View convertView, ViewGroup viewGroup) {
-		Venue mList = ItemListFragment.venueList.get(position);
+		Venue mList = venueList.get(position);
 		if (convertView == null) {
 			LayoutInflater inflater = (LayoutInflater) mContext
 					.getSystemService(Context.LAYOUT_INFLATER_SERVICE);

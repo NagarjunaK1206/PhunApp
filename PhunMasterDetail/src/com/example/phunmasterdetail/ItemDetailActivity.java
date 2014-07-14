@@ -1,16 +1,18 @@
 package com.example.phunmasterdetail;
 
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.widget.ShareActionProvider;
 import com.example.phunmasterdetail.util.PhunMasterConstants;
 import com.example.phunmasterdetail.util.Venue;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.ShareActionProvider;
+import android.view.Menu;
+import android.view.MenuItem;
 
-public class ItemDetailActivity extends SherlockFragmentActivity {
+public class ItemDetailActivity extends ActionBarActivity {
 	private ShareActionProvider mShareActionProvider;
 
 	@Override
@@ -33,25 +35,26 @@ public class ItemDetailActivity extends SherlockFragmentActivity {
 		}
 	}
 
+	@SuppressLint("NewApi")
 	public boolean onCreateOptionsMenu(Menu menu) {
 
-		getSupportMenuInflater().inflate(R.menu.menu, menu);
+		getMenuInflater().inflate(R.menu.menu, menu);
 		MenuItem mMenuItem = menu.findItem(R.id.menu_item_share);
 		mMenuItem.setEnabled(true);
-		mShareActionProvider = (ShareActionProvider) mMenuItem
-				.getActionProvider();
+		mMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		mShareActionProvider = new ShareActionProvider(this);
+		MenuItemCompat.setActionProvider(mMenuItem, mShareActionProvider);
 		mShareActionProvider
 				.setShareHistoryFileName("custom_share_history.xml");
 		Venue mVenue = ItemListFragment.venueList.get(Integer
 				.parseInt(getIntent().getStringExtra(
-						PhunMasterConstants.ARG_ITEM_ID))-1);
+						PhunMasterConstants.ARG_ITEM_ID)) - 1);
 		Intent mSendIntent = new Intent();
 		mSendIntent.setAction(Intent.ACTION_SEND);
-		mSendIntent.putExtra(
-				Intent.EXTRA_TEXT,
+		mSendIntent.putExtra(Intent.EXTRA_TEXT,
 				"Venue Name: " + mVenue.getName() + " Venue address:  "
-						+ mVenue.getAddress()+","+mVenue.getCity()+","+mVenue.getState()
-						+" "+mVenue.getZip());
+						+ mVenue.getAddress() + "," + mVenue.getCity() + ","
+						+ mVenue.getState() + " " + mVenue.getZip());
 		mSendIntent.setType("text/plain");
 		doShare(mSendIntent);
 		return true;
@@ -62,8 +65,7 @@ public class ItemDetailActivity extends SherlockFragmentActivity {
 	}
 
 	@Override
-	public boolean onOptionsItemSelected(
-			com.actionbarsherlock.view.MenuItem item) {
+	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case android.R.id.home:
 			onBackPressed();
